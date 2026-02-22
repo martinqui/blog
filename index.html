@@ -6,6 +6,7 @@
   <title>With Warm Regards</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+  <script src="data.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -149,6 +150,18 @@
 
 <script>
   const STORAGE_KEY = 'wwr_posts';
+  const ABOUT_KEY   = 'wwr_about';
+  const SEEDED_KEY  = 'wwr_seeded';
+
+  // Seed localStorage from data.js if it's newer than last seed
+  (function seedFromDataFile() {
+    if (typeof WWR_DATA === 'undefined' || !WWR_DATA.exportedAt) return;
+    const lastSeed = localStorage.getItem(SEEDED_KEY);
+    if (lastSeed && lastSeed >= WWR_DATA.exportedAt) return;
+    if (WWR_DATA.posts?.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(WWR_DATA.posts));
+    if (WWR_DATA.about && Object.keys(WWR_DATA.about).length) localStorage.setItem(ABOUT_KEY, JSON.stringify(WWR_DATA.about));
+    localStorage.setItem(SEEDED_KEY, WWR_DATA.exportedAt);
+  })();
 
   function getPosts() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
