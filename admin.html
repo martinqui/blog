@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — With Warm Regards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #111; --mid: #888; --light: #e0e0e0; --bg: #fff;
+      --bg2: #f7f7f7; --accent: #111; --red: #c0392b;
+      --sans: 'Instrument Sans', Helvetica, Arial, sans-serif;
+    }
+    body { background: var(--bg2); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--bg); border-bottom: 1px solid var(--light);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; }
+    .topbar-sub { font-size: 0.7rem; color: var(--mid); letter-spacing: 0.06em; }
+    .topbar-right { display: flex; gap: 0.8rem; align-items: center; }
+    .btn { font-family: var(--sans); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1.1rem; border: 1px solid var(--light); background: var(--bg); color: var(--mid); cursor: pointer; transition: all 0.15s; border-radius: 2px; }
+    .btn:hover { border-color: var(--ink); color: var(--ink); }
+    .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .btn.primary:hover { background: #333; }
+    .btn.danger { border-color: var(--red); color: var(--red); }
+    .btn.danger:hover { background: var(--red); color: #fff; }
+
+    /* ── LAYOUT ── */
+    .layout { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 57px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar { background: var(--bg); border-right: 1px solid var(--light); padding: 1.5rem; overflow-y: auto; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .sidebar-heading { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid); }
+    .post-cards { display: flex; flex-direction: column; gap: 0.5rem; }
+    .post-card {
+      padding: 0.9rem 1rem; border: 1px solid var(--light); border-radius: 3px;
+      cursor: pointer; transition: border-color 0.15s; background: var(--bg);
+    }
+    .post-card:hover { border-color: #bbb; }
+    .post-card.selected { border-color: var(--ink); }
+    .post-card-title { font-size: 0.88rem; font-weight: 400; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .post-card-meta { font-size: 0.65rem; color: var(--mid); display: flex; gap: 0.6rem; align-items: center; }
+    .badge { font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 5px; border-radius: 2px; }
+    .badge.published { background: #e8f5e9; color: #2e7d32; }
+    .badge.draft { background: #f5f5f5; color: var(--mid); }
+    .empty-sidebar { font-size: 0.82rem; color: var(--mid); font-style: italic; padding: 0.5rem 0; }
+
+    /* ── EDITOR ── */
+    .editor-area { padding: 2rem 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; max-width: 860px; }
+    .editor-welcome { color: var(--mid); font-size: 0.9rem; font-style: italic; padding: 4rem 0; text-align: center; }
+
+    .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field-label { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); }
+    input[type="text"], textarea {
+      font-family: var(--sans); font-size: 0.95rem; color: var(--ink);
+      background: var(--bg); border: 1px solid var(--light); border-radius: 2px;
+      padding: 0.65rem 0.85rem; width: 100%; outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, textarea:focus { border-color: var(--ink); }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
+    #field-title { font-size: 1.2rem; font-weight: 400; }
+
+    /* ── RICH TEXT TOOLBAR ── */
+    .rte-wrapper { border: 1px solid var(--light); border-radius: 2px; background: var(--bg); transition: border-color 0.15s; }
+    .rte-wrapper:focus-within { border-color: var(--ink); }
+    .rte-toolbar {
+      display: flex; flex-wrap: wrap; gap: 2px; padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid var(--light); background: var(--bg2);
+    }
+    .rte-toolbar button {
+      font-family: var(--sans); font-size: 0.78rem; padding: 0.28rem 0.55rem;
+      border: 1px solid transparent; border-radius: 2px; background: none;
+      cursor: pointer; color: var(--ink); transition: all 0.1s; line-height: 1;
+    }
+    .rte-toolbar button:hover { background: var(--bg); border-color: var(--light); }
+    .rte-toolbar button.active { background: var(--ink); color: #fff; }
+    .rte-toolbar .sep { width: 1px; background: var(--light); margin: 2px 4px; align-self: stretch; }
+
+    #editor {
+      min-height: 380px; padding: 1.2rem; outline: none;
+      font-size: 0.95rem; line-height: 1.88; color: #222;
+      overflow-y: auto;
+    }
+    #editor:empty:before { content: attr(data-placeholder); color: var(--light); pointer-events: none; }
+    #editor p { margin-bottom: 1.2rem; }
+    #editor h2 { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin: 2rem 0 0.8rem; }
+    #editor h3 { font-size: 1rem; font-weight: 500; margin: 1.5rem 0 0.6rem; }
+    #editor blockquote { border-left: 2px solid var(--light); padding-left: 1.2rem; margin: 1.5rem 0; font-style: italic; color: var(--mid); }
+    #editor img { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; border: 1px solid var(--light); }
+    #editor ul, #editor ol { padding-left: 1.5rem; margin-bottom: 1.2rem; }
+    #editor li { margin-bottom: 0.25rem; }
+
+    /* IMAGE UPLOAD */
+    .image-upload-row { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+    .upload-area {
+      border: 1px dashed var(--light); border-radius: 3px; padding: 0.7rem 1rem;
+      font-size: 0.75rem; color: var(--mid); cursor: pointer; transition: border-color 0.15s;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .upload-area:hover { border-color: var(--ink); color: var(--ink); }
+    #photo-file-input { display: none; }
+    .photo-preview-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+    .photo-thumb { position: relative; width: 80px; height: 80px; }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; border: 1px solid var(--light); border-radius: 2px; }
+    .photo-thumb button { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; border: none; background: var(--ink); color: #fff; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .insert-hint { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.05em; }
+
+    /* PUBLISH ROW */
+    .publish-row { display: flex; gap: 1rem; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--light); }
+    .status-msg { font-size: 0.75rem; color: var(--mid); font-style: italic; }
+    .status-msg.ok { color: #2e7d32; }
+    .status-msg.err { color: var(--red); }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg); border: 1px solid var(--light); border-radius: 4px; padding: 2rem; max-width: 380px; width: 90%; }
+    .modal h3 { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.8rem; }
+    .modal p { font-size: 0.85rem; color: var(--mid); margin-bottom: 1.5rem; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 0.7rem; justify-content: flex-end; }
+
+    @media (max-width: 700px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--light); }
+      .editor-area { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">With Warm Regards</div>
+    <div class="topbar-sub">Admin · <a href="index.html" target="_blank" style="color:var(--mid);text-decoration:none;">View blog ↗</a></div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" onclick="newPost()">+ New post</button>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-heading">All posts</span>
+    </div>
+    <div class="post-cards" id="post-cards">
+      <p class="empty-sidebar">No posts yet. Click "+ New post" to begin.</p>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor-area" id="editor-area">
+    <div class="editor-welcome" id="welcome-msg">
+      Select a post to edit, or create a new one.
+    </div>
+
+    <div id="editor-form" style="display:none; display:flex; flex-direction:column; gap:1.4rem;">
+
+      <div class="field-group">
+        <label class="field-label" for="field-title">Title</label>
+        <input type="text" id="field-title" placeholder="Post title…" oninput="autosave()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="field-lede">Lede / subtitle <span style="font-style:italic;text-transform:none;letter-spacing:0">(optional — shown in italics below title)</span></label>
+        <textarea id="field-lede" rows="2" placeholder="A single sentence that sets the tone…" oninput="autosave()"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Body</label>
+        <div class="rte-wrapper">
+          <div class="rte-toolbar">
+            <button onclick="fmt('bold')" title="Bold"><b>B</b></button>
+            <button onclick="fmt('italic')" title="Italic"><i>I</i></button>
+            <button onclick="fmt('underline')" title="Underline"><u>U</u></button>
+            <div class="sep"></div>
+            <button onclick="fmtBlock('h2')" title="Heading">H2</button>
+            <button onclick="fmtBlock('h3')" title="Subheading">H3</button>
+            <button onclick="fmtBlock('p')" title="Paragraph">¶</button>
+            <div class="sep"></div>
+            <button onclick="fmt('insertUnorderedList')" title="Bullet list">• List</button>
+            <button onclick="fmt('insertOrderedList')" title="Numbered list">1. List</button>
+            <div class="sep"></div>
+            <button onclick="fmtBlock('blockquote')" title="Blockquote">" Quote</button>
+            <div class="sep"></div>
+            <button onclick="insertLink()" title="Link">Link</button>
+            <div class="sep"></div>
+            <button onclick="fmt('removeFormat')" title="Clear formatting">Clear</button>
+          </div>
+          <div id="editor" contenteditable="true" data-placeholder="Start writing…" oninput="autosave()"></div>
+        </div>
+      </div>
+
+      <!-- PHOTO SECTION -->
+      <div class="field-group">
+        <label class="field-label">Photos</label>
+        <div class="image-upload-row">
+          <label class="upload-area" for="photo-file-input">
+            <span>↑</span> Upload photo
+          </label>
+          <input type="file" id="photo-file-input" accept="image/*" multiple onchange="handlePhotoUpload(event)">
+          <span class="insert-hint">Click a thumbnail below to insert it into the post body at the cursor.</span>
+        </div>
+        <div class="photo-preview-strip" id="photo-strip"></div>
+      </div>
+
+      <!-- PUBLISH -->
+      <div class="publish-row">
+        <button class="btn primary" onclick="publishPost()">Publish</button>
+        <button class="btn" onclick="saveDraft()">Save draft</button>
+        <button class="btn danger" onclick="confirmDelete()">Delete</button>
+        <span class="status-msg" id="status-msg"></span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>Delete this post?</h3>
+    <p>This will permanently remove the post. This action cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn danger" onclick="deletePost()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'wwr_posts';
+  let currentId = null;
+  let autosaveTimer = null;
+  // photos attached to current post: [{id, dataUrl}]
+  let currentPhotos = [];
+
+  /* ── STORAGE ── */
+  function getPosts() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+  function savePosts(posts) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+  /* ── SIDEBAR ── */
+  function renderSidebar() {
+    const posts = getPosts().sort((a, b) => b.createdAt - a.createdAt);
+    const container = document.getElementById('post-cards');
+    if (posts.length === 0) {
+      container.innerHTML = '<p class="empty-sidebar">No posts yet. Click "+ New post" to begin.</p>';
+      return;
+    }
+    container.innerHTML = posts.map(p => `
+      <div class="post-card ${p.id === currentId ? 'selected' : ''}" onclick="loadPost('${p.id}')">
+        <div class="post-card-title">${p.title || 'Untitled'}</div>
+        <div class="post-card-meta">
+          <span>${formatDate(p.createdAt)}</span>
+          <span class="badge ${p.published ? 'published' : 'draft'}">${p.published ? 'Published' : 'Draft'}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ── EDITOR ── */
+  function showEditor() {
+    document.getElementById('welcome-msg').style.display = 'none';
+    document.getElementById('editor-form').style.display = 'flex';
+  }
+
+  function newPost() {
+    const posts = getPosts();
+    const post = { id: uid(), title: '', lede: '', body: '', photos: [], published: false, createdAt: Date.now() };
+    posts.unshift(post);
+    savePosts(posts);
+    loadPost(post.id);
+    renderSidebar();
+    document.getElementById('field-title').focus();
+  }
+
+  function loadPost(id) {
+    const post = getPosts().find(p => p.id === id);
+    if (!post) return;
+    currentId = id;
+    currentPhotos = post.photos || [];
+    document.getElementById('field-title').value = post.title || '';
+    document.getElementById('field-lede').value = post.lede || '';
+    document.getElementById('editor').innerHTML = post.body || '';
+    renderPhotoStrip();
+    showEditor();
+    setStatus('');
+    renderSidebar();
+  }
+
+  function collectPost(published) {
+    return {
+      id: currentId,
+      title: document.getElementById('field-title').value.trim(),
+      lede: document.getElementById('field-lede').value.trim(),
+      body: document.getElementById('editor').innerHTML,
+      photos: currentPhotos,
+      published,
+      createdAt: getPosts().find(p => p.id === currentId)?.createdAt || Date.now()
+    };
+  }
+
+  function upsertPost(updated) {
+    const posts = getPosts();
+    const idx = posts.findIndex(p => p.id === updated.id);
+    if (idx >= 0) posts[idx] = updated; else posts.unshift(updated);
+    savePosts(posts);
+  }
+
+  function saveDraft() {
+    if (!currentId) return;
+    upsertPost(collectPost(false));
+    renderSidebar();
+    setStatus('Draft saved.', 'ok');
+  }
+
+  function publishPost() {
+    if (!currentId) return;
+    const post = collectPost(true);
+    if (!post.title) { setStatus('Please add a title before publishing.', 'err'); return; }
+    upsertPost(post);
+    renderSidebar();
+    setStatus('Published!', 'ok');
+  }
+
+  function autosave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      if (!currentId) return;
+      upsertPost(collectPost(getPosts().find(p => p.id === currentId)?.published || false));
+      renderSidebar();
+      setStatus('Saved', '');
+    }, 1200);
+  }
+
+  /* ── DELETE ── */
+  function confirmDelete() { document.getElementById('delete-modal').classList.add('open'); }
+  function closeModal() { document.getElementById('delete-modal').classList.remove('open'); }
+  function deletePost() {
+    closeModal();
+    if (!currentId) return;
+    savePosts(getPosts().filter(p => p.id !== currentId));
+    currentId = null;
+    currentPhotos = [];
+    document.getElementById('editor-form').style.display = 'none';
+    document.getElementById('welcome-msg').style.display = 'block';
+    renderSidebar();
+  }
+
+  /* ── RICH TEXT ── */
+  function fmt(cmd, val) {
+    document.getElementById('editor').focus();
+    document.execCommand(cmd, false, val || null);
+    autosave();
+  }
+  function fmtBlock(tag) {
+    document.getElementById('editor').focus();
+    document.execCommand('formatBlock', false, tag);
+    autosave();
+  }
+  function insertLink() {
+    const url = prompt('Enter URL:');
+    if (url) fmt('createLink', url);
+  }
+
+  /* ── PHOTOS ── */
+  function handlePhotoUpload(e) {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const photo = { id: uid(), dataUrl: ev.target.result };
+        currentPhotos.push(photo);
+        renderPhotoStrip();
+        autosave();
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  }
+
+  function renderPhotoStrip() {
+    const strip = document.getElementById('photo-strip');
+    strip.innerHTML = currentPhotos.map(ph => `
+      <div class="photo-thumb">
+        <img src="${ph.dataUrl}" alt="" title="Click to insert into post" onclick="insertPhoto('${ph.id}')" style="cursor:pointer">
+        <button onclick="removePhoto('${ph.id}')" title="Remove">×</button>
+      </div>
+    `).join('');
+  }
+
+  function insertPhoto(id) {
+    const ph = currentPhotos.find(p => p.id === id);
+    if (!ph) return;
+    const editor = document.getElementById('editor');
+    editor.focus();
+    const img = `<img src="${ph.dataUrl}" alt="" style="max-width:100%;margin:1.5rem 0;">`;
+    document.execCommand('insertHTML', false, img);
+    autosave();
+  }
+
+  function removePhoto(id) {
+    currentPhotos = currentPhotos.filter(p => p.id !== id);
+    renderPhotoStrip();
+    autosave();
+  }
+
+  /* ── STATUS ── */
+  function setStatus(msg, type) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.className = 'status-msg' + (type ? ' ' + type : '');
+    if (msg && type === 'ok') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+  }
+
+  function formatDate(ts) {
+    return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  /* ── INIT ── */
+  renderSidebar();
+</script>
+</body>
+</html>
