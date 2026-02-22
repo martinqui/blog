@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Name</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Libre+Baskerville:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #1a1814;
+      --paper: #f7f4ef;
+      --warm-mid: #8c7b6b;
+      --warm-light: #d9d0c4;
+      --accent: #b85c38;
+      --serif: 'EB Garamond', Georgia, serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.75;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1.5rem 3rem;
+      background: var(--paper);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+    nav.scrolled { border-color: var(--warm-light); }
+
+    .nav-name {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-style: italic;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--warm-mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--ink); }
+
+    /* ── SECTIONS ── */
+    section {
+      display: none;
+      padding: 9rem 3rem 6rem;
+      max-width: 760px;
+      margin: 0 auto;
+      animation: fadeUp 0.5s ease both;
+    }
+    section.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── HOME ── */
+    #home {
+      max-width: 680px;
+      padding-top: 30vh;
+      padding-bottom: 12rem;
+    }
+    .home-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--warm-mid);
+      margin-bottom: 2rem;
+    }
+    .home-title {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      margin-bottom: 2.5rem;
+    }
+    .home-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .home-bio {
+      font-size: 1.1rem;
+      color: var(--warm-mid);
+      max-width: 520px;
+      line-height: 1.8;
+      margin-bottom: 3.5rem;
+    }
+    .home-links {
+      display: flex;
+      gap: 2rem;
+    }
+    .btn-ghost {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 2px;
+      transition: color 0.2s, border-color 0.2s;
+      cursor: pointer;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── WRITING ── */
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--warm-mid);
+      margin-bottom: 3.5rem;
+    }
+
+    .post-list { list-style: none; }
+    .post-item {
+      border-top: 1px solid var(--warm-light);
+      padding: 2.2rem 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: start;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .post-item:hover { opacity: 0.65; }
+    .post-item:last-child { border-bottom: 1px solid var(--warm-light); }
+
+    .post-title {
+      font-size: 1.35rem;
+      font-weight: 400;
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+    }
+    .post-excerpt {
+      font-size: 0.95rem;
+      color: var(--warm-mid);
+      font-style: italic;
+      line-height: 1.6;
+    }
+    .post-date {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--warm-mid);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      margin-top: 0.3rem;
+    }
+
+    /* ── SINGLE POST ── */
+    #post-view {
+      display: none;
+      padding: 9rem 3rem 8rem;
+      max-width: 660px;
+      margin: 0 auto;
+      animation: fadeUp 0.5s ease both;
+    }
+    #post-view.active { display: block; }
+
+    .post-back {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--warm-mid);
+      cursor: pointer;
+      border: none;
+      background: none;
+      margin-bottom: 3rem;
+      display: inline-block;
+      transition: color 0.2s;
+    }
+    .post-back:hover { color: var(--ink); }
+
+    .post-header { margin-bottom: 3rem; }
+    .post-header .post-date { margin-bottom: 1rem; }
+    .post-header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 1.2rem;
+    }
+    .post-header .lede {
+      font-size: 1.15rem;
+      font-style: italic;
+      color: var(--warm-mid);
+      line-height: 1.7;
+      border-left: 2px solid var(--warm-light);
+      padding-left: 1.2rem;
+    }
+
+    .post-body { border-top: 1px solid var(--warm-light); padding-top: 2.5rem; }
+    .post-body p { margin-bottom: 1.6rem; font-size: 1.05rem; line-height: 1.85; }
+    .post-body p:first-child::first-letter {
+      font-size: 3.2rem;
+      line-height: 0.85;
+      float: left;
+      margin-right: 0.08em;
+      margin-top: 0.12em;
+      font-family: 'Libre Baskerville', serif;
+      color: var(--accent);
+    }
+    .post-body h2 {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin: 2.5rem 0 1rem;
+      font-style: italic;
+    }
+    .post-body blockquote {
+      border-left: 2px solid var(--warm-light);
+      margin: 2rem 0;
+      padding-left: 1.5rem;
+      font-style: italic;
+      color: var(--warm-mid);
+      font-size: 1.1rem;
+    }
+
+    /* ── PHOTOS ── */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-top: 0;
+    }
+    .photo-item {
+      aspect-ratio: 4/5;
+      background: var(--warm-light);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    .photo-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s ease, opacity 0.3s;
+      opacity: 0.9;
+    }
+    .photo-item:hover img { transform: scale(1.03); opacity: 1; }
+    .photo-caption {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      color: var(--warm-mid);
+      margin-top: 0.6rem;
+      text-transform: uppercase;
+    }
+    /* placeholder for images not yet added */
+    .photo-placeholder {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #e8e0d5 0%, #d5cabb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--warm-mid);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── ABOUT ── */
+    #about .about-name {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.15;
+      margin-bottom: 2.5rem;
+    }
+    #about .about-name em { font-style: italic; color: var(--accent); }
+    .about-body { font-size: 1.05rem; line-height: 1.9; }
+    .about-body p { margin-bottom: 1.5rem; }
+    .about-body a { color: var(--ink); }
+    .about-body a:hover { color: var(--accent); }
+    .about-divider {
+      border: none;
+      border-top: 1px solid var(--warm-light);
+      margin: 3rem 0;
+    }
+    .about-details {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 0.6rem 2rem;
+      font-size: 0.92rem;
+    }
+    .about-details .label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--warm-mid);
+      padding-top: 0.15rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 4rem 3rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--warm-light);
+      text-transform: uppercase;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { gap: 1.5rem; }
+      section, #post-view { padding-left: 1.5rem; padding-right: 1.5rem; }
+      #home { padding-top: 20vh; }
+      .photo-grid { grid-template-columns: 1fr; }
+      .about-details { grid-template-columns: 1fr; }
+      .about-details .label { margin-top: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="nav">
+  <a class="nav-name" href="#" onclick="showSection('home')">Your Name</a>
+  <ul class="nav-links">
+    <li><a href="#" onclick="showSection('writing')" data-section="writing">Writing</a></li>
+    <li><a href="#" onclick="showSection('photos')" data-section="photos">Photos</a></li>
+    <li><a href="#" onclick="showSection('about')" data-section="about">About</a></li>
+  </ul>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="active">
+  <p class="home-eyebrow">Est. 2025 · Personal Blog</p>
+  <h1 class="home-title">A place for<br><em>thoughts, images,</em><br>and slow writing.</h1>
+  <p class="home-bio">
+    Welcome. This is where I write about things I find beautiful, confusing, or worth examining.
+    No algorithm, no feed — just a space to think out loud.
+  </p>
+  <div class="home-links">
+    <button class="btn-ghost" onclick="showSection('writing')">Read the blog</button>
+    <button class="btn-ghost" onclick="showSection('about')">About me</button>
+  </div>
+</section>
+
+<!-- WRITING LIST -->
+<section id="writing">
+  <p class="section-label">Writing</p>
+  <ul class="post-list" id="post-list"></ul>
+</section>
+
+<!-- SINGLE POST VIEW -->
+<div id="post-view">
+  <button class="post-back" onclick="showSection('writing')">← Back to writing</button>
+  <div class="post-header">
+    <p class="post-date" id="sv-date"></p>
+    <h1 id="sv-title"></h1>
+    <p class="lede" id="sv-lede"></p>
+  </div>
+  <div class="post-body" id="sv-body"></div>
+</div>
+
+<!-- PHOTOS -->
+<section id="photos">
+  <p class="section-label">Photos</p>
+  <div class="photo-grid" id="photo-grid"></div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <p class="section-label">About</p>
+  <h2 class="about-name">Your Name.<br><em>Writer, thinker,<br>occasional photographer.</em></h2>
+  <div class="about-body">
+    <p>
+      I'm a writer based in [City]. This blog is a slow-moving record of things I notice —
+      books, conversations, textures of place, ideas that won't leave me alone.
+    </p>
+    <p>
+      I believe good writing is an act of attention. I try to pay attention.
+    </p>
+    <p>
+      By day I work in [field]. By the rest of the time, I read, walk, and take photographs
+      of things that probably only interest me.
+    </p>
+    <hr class="about-divider">
+    <div class="about-details">
+      <span class="label">Location</span>
+      <span>Your City, Country</span>
+      <span class="label">Email</span>
+      <span><a href="mailto:you@email.com">you@email.com</a></span>
+      <span class="label">Instagram</span>
+      <span><a href="https://instagram.com/" target="_blank">@yourhandle</a></span>
+      <span class="label">Reading now</span>
+      <span>The name of whatever book</span>
+    </div>
+  </div>
+</section>
+
+<footer>© 2025 Your Name · Made with care</footer>
+
+<script>
+  /* ── DATA ── Edit these to add your own posts and photos ── */
+
+  const POSTS = [
+    {
+      id: 1,
+      title: "On the pleasure of rereading",
+      date: "February 2025",
+      excerpt: "The book hasn't changed. I have. That seems like reason enough.",
+      lede: "There's a particular kind of reading that isn't about consuming — it's about returning. Revisiting a book is less an act of nostalgia than of measurement.",
+      body: `
+        <p>The first time I read a book, I am racing toward the ending, toward resolution, toward the satisfaction of knowing. The second time, the ending dissolves as obstacle, and the book becomes itself: texture, sentence, the particular quality of attention a writer paid to the world.</p>
+        <p>I reread Marilynne Robinson's <em>Gilead</em> every few years. Each time it strikes me differently — not because the book has changed, but because I have arrived at it from a different angle of my life. The sentences that once seemed merely beautiful now seem necessary.</p>
+        <h2>What rereading teaches</h2>
+        <p>There's an argument that rereading is indulgent, even intellectually lazy — all those unread books, all that frontier left unexplored. I used to half-believe this. I no longer do.</p>
+        <blockquote>To read a great book for the second time is to read it for the first time properly.</blockquote>
+        <p>Rereading is, I've come to think, a form of honesty. It is admitting that you did not understand something fully, and choosing to return to it rather than pretend otherwise and move on.</p>
+        <p>The books worth rereading are the ones that rewarded incomplete understanding in the first place. If you got everything from a book the first time, perhaps you didn't need to read it at all.</p>
+      `
+    },
+    {
+      id: 2,
+      title: "Walking as method",
+      date: "January 2025",
+      excerpt: "A way of not forcing thought — of letting the city think alongside you.",
+      lede: "I have solved more problems walking than sitting at a desk. This seems like information.",
+      body: `
+        <p>There is something about walking — the rhythm, the slight discomfort, the way the world keeps interrupting — that makes thought move differently. Sitting, I circle the same problem. Walking, I seem to advance on it from new directions.</p>
+        <p>I have started treating the walk as a form of research. I carry a small notebook. I don't force it. The city offers material constantly; the question is only whether you're paying attention.</p>
+        <p>What I notice on walks: corners, facades, the way people stand waiting for buses, the colors that appear in shadow. The ordinary made strange by the act of walking through it without destination.</p>
+        <p>Some of these observations become sentences later. Most don't. But they accumulate into something — a texture of attention, a way of seeing, a posture toward the world that I can't seem to maintain sitting still.</p>
+      `
+    },
+    {
+      id: 3,
+      title: "Notes on living slowly",
+      date: "December 2024",
+      excerpt: "A project, ongoing, imperfect, worth continuing.",
+      lede: "Slowness is not idleness. It is the condition under which certain kinds of noticing become possible.",
+      body: `
+        <p>I started trying to live more slowly two years ago, not as ideology, but out of exhaustion. The speed at which I had been living — consuming, responding, producing, optimizing — had left me with a sensation I can only describe as hollowness. Full of things. Empty of anything.</p>
+        <p>Living slowly turns out to be harder than it sounds. There are structural pressures against it: the feed, the inbox, the ambient sense that everyone else is doing more and you are falling behind. Slowness requires a kind of active resistance that is itself somewhat tiring.</p>
+        <h2>What I've tried</h2>
+        <p>I've tried to eat without screens. To walk without headphones sometimes. To let there be days with no particular output — no finished thing, no documentation of experience, no product. These are embarrassingly small changes. They have mattered more than I expected.</p>
+        <p>The payoff, such as it is, is a kind of thickness to experience. When I slow down, days feel longer. Not in the bad way — in the way that childhood summers felt long. Full of distinct moments that haven't been crowded out by other moments.</p>
+      `
+    }
+  ];
+
+  const PHOTOS = [
+    { src: "", caption: "Morning light, February" },
+    { src: "", caption: "Still life, untitled" },
+    { src: "", caption: "Street, early winter" },
+    { src: "", caption: "Interior, afternoon" },
+    { src: "", caption: "Detail, unknown building" },
+    { src: "", caption: "Harbour, fog" },
+  ];
+
+  /* ── RENDER ── */
+
+  function renderPosts() {
+    const list = document.getElementById('post-list');
+    list.innerHTML = POSTS.map(p => `
+      <li class="post-item" onclick="openPost(${p.id})">
+        <div>
+          <p class="post-title">${p.title}</p>
+          <p class="post-excerpt">${p.excerpt}</p>
+        </div>
+        <p class="post-date">${p.date}</p>
+      </li>
+    `).join('');
+  }
+
+  function renderPhotos() {
+    const grid = document.getElementById('photo-grid');
+    grid.innerHTML = PHOTOS.map(ph => `
+      <div>
+        <div class="photo-item">
+          ${ph.src
+            ? `<img src="${ph.src}" alt="${ph.caption}" loading="lazy">`
+            : `<div class="photo-placeholder">Add image</div>`
+          }
+        </div>
+        <p class="photo-caption">${ph.caption}</p>
+      </div>
+    `).join('');
+  }
+
+  function openPost(id) {
+    const post = POSTS.find(p => p.id === id);
+    if (!post) return;
+    document.getElementById('sv-date').textContent = post.date;
+    document.getElementById('sv-title').textContent = post.title;
+    document.getElementById('sv-lede').textContent = post.lede;
+    document.getElementById('sv-body').innerHTML = post.body;
+
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.getElementById('post-view').classList.add('active');
+    window.scrollTo(0, 0);
+    updateNav(null);
+  }
+
+  function showSection(id) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.getElementById('post-view').classList.remove('active');
+    const target = document.getElementById(id);
+    if (target) {
+      target.classList.add('active');
+      // re-trigger animation
+      target.style.animation = 'none';
+      requestAnimationFrame(() => { target.style.animation = ''; });
+    }
+    window.scrollTo(0, 0);
+    updateNav(id);
+    return false;
+  }
+
+  function updateNav(activeId) {
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.classList.toggle('active', a.dataset.section === activeId);
+    });
+  }
+
+  // Nav scroll effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  // Init
+  renderPosts();
+  renderPhotos();
+</script>
+
+</body>
+</html>
