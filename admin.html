@@ -433,6 +433,12 @@
 <script>
   const STORAGE_KEY = 'wwr_posts';
   const ABOUT_KEY   = 'wwr_about';
+
+  function getAbout() {
+    try { return JSON.parse(localStorage.getItem(ABOUT_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveAboutData(data) { localStorage.setItem(ABOUT_KEY, JSON.stringify(data)); }
   const SEEDED_KEY  = 'wwr_seeded';
 
   /* ── SEED FROM data.js ON FIRST LOAD ──
@@ -924,16 +930,7 @@
   });
 
   /* ── ABOUT EDITOR ── */
-  const ABOUT_KEY = 'wwr_about';
-
-  function getAbout() {
-    try { return JSON.parse(localStorage.getItem(ABOUT_KEY)) || {}; }
-    catch { return {}; }
-  }
-  function saveAboutData(data) { localStorage.setItem(ABOUT_KEY, JSON.stringify(data)); }
-
   function openAboutEditor() {
-    // deselect any post
     currentId = null;
     document.getElementById('editor-form').style.display = 'none';
     document.getElementById('welcome-msg').style.display = 'none';
@@ -949,7 +946,6 @@
     document.getElementById('about-form').style.display = 'flex';
     setAboutStatus('');
 
-    // highlight sidebar card
     document.querySelectorAll('.post-card').forEach(c => c.classList.remove('selected'));
     document.getElementById('about-nav-card').classList.add('selected');
     renderSidebar();
