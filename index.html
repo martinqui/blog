@@ -1,134 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>With Warm Regards</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --ink: #111; --mid: #888; --light: #e0e0e0; --bg: #fff;
-      --sans: 'Instrument Sans', Helvetica, Arial, sans-serif;
+      --ink: #111; --mid: #999; --light: #e2e2e2; --bg: #fff;
+      --sans: 'DM Sans', Arial, sans-serif;
     }
     html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.7; }
+    body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.55; }
 
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       background: var(--bg); display: flex; justify-content: space-between;
-      align-items: center; padding: 1.6rem 2.5rem;
+      align-items: center; padding: 1.5rem 2.5rem;
       border-bottom: 1px solid transparent; transition: border-color 0.3s;
     }
     nav.scrolled { border-color: var(--light); }
-    .nav-title { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); cursor: pointer; user-select: none; }
+    .nav-title { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.045em; text-transform: uppercase; color: var(--ink); cursor: pointer; user-select: none; }
     .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); text-decoration: none; transition: color 0.15s; }
+    .nav-links a { font-size: 0.75rem; letter-spacing: 0.035em; text-transform: uppercase; color: var(--mid); text-decoration: none; transition: color 0.15s; }
     .nav-links a:hover, .nav-links a.active { color: var(--ink); }
 
-    section { display: none; padding: 8rem 2.5rem 8rem; max-width: 680px; margin: 0 auto; animation: fadeIn 0.35s ease both; }
-    section.active { display: block; }
-    #post-view { display: none; padding: 8rem 2.5rem 9rem; max-width: 640px; margin: 0 auto; animation: fadeIn 0.35s ease both; }
-    #post-view.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .view { display: none; animation: fadeIn 0.3s ease both; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* HOME */
-    #home { padding-top: 30vh; padding-bottom: 16rem; max-width: 520px; }
-    #home h1 { font-size: clamp(1.5rem, 3.5vw, 2.2rem); font-weight: 400; line-height: 1.35; margin-bottom: 1.6rem; }
-    #home p { font-size: 0.93rem; color: var(--mid); line-height: 1.8; margin-bottom: 2.2rem; }
-    .text-link { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--ink); padding-bottom: 1px; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; transition: color 0.15s, border-color 0.15s; }
-    .text-link:hover { color: var(--mid); border-color: var(--mid); }
+    /* GRID */
+    #view-grid { padding: 5.5rem 2.5rem 6rem; }
+    .grid-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2.5rem; padding-top: 1.5rem; }
+    .grid-label { font-size: 0.68rem; letter-spacing: 0.049em; text-transform: uppercase; color: var(--mid); }
 
-    /* POSTS */
-    .section-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid); margin-bottom: 2.5rem; }
-    .post-list { list-style: none; }
-    .post-item { display: flex; justify-content: space-between; align-items: baseline; gap: 2rem; padding: 1.5rem 0; border-top: 1px solid var(--light); cursor: pointer; }
-    .post-item:last-child { border-bottom: 1px solid var(--light); }
-    .post-item:hover .post-title { color: var(--mid); }
-    .post-title { font-size: 0.97rem; font-weight: 400; transition: color 0.15s; }
-    .post-excerpt { font-size: 0.83rem; color: var(--mid); margin-top: 0.2rem; font-style: italic; }
-    .post-date { font-size: 0.7rem; color: var(--mid); letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0; }
-    .empty-state { font-size: 0.9rem; color: var(--mid); font-style: italic; padding: 2rem 0; }
+    .post-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+
+    .tile { cursor: pointer; background: #f0efed; overflow: hidden; }
+    .tile-img { aspect-ratio: 3/4; width: 100%; overflow: hidden; background: #ebebeb; }
+    .tile-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease, opacity 0.3s; }
+    .tile:hover .tile-img img { transform: scale(1.04); opacity: 0.88; }
+    .tile-no-img { width: 100%; height: 100%; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; letter-spacing: 0.035em; text-transform: uppercase; color: #ccc; }
+    .tile-info { padding: 0.9rem 1rem 1.2rem; }
+    .tile-date { font-size: 0.6rem; letter-spacing: 0.025em; color: var(--mid); text-transform: uppercase; margin-bottom: 0.3rem; }
+    .tile-title { font-size: 0.9rem; font-weight: 400; line-height: 1.3; color: var(--ink); }
+    .tile-lede { font-size: 0.76rem; color: var(--mid); font-style: italic; margin-top: 0.25rem; line-height: 1.45; }
+
+    .empty-state { grid-column: 1/-1; padding: 6rem 0; text-align: center; font-size: 0.88rem; color: var(--mid); font-style: italic; }
 
     /* SINGLE POST */
-    .back-btn { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); cursor: pointer; background: none; border: none; margin-bottom: 3.5rem; display: block; transition: color 0.15s; padding: 0; }
+    #view-post { padding: 8rem 2.5rem 9rem; max-width: 640px; margin: 0 auto; }
+    .back-btn { font-size: 0.68rem; letter-spacing: 0.035em; text-transform: uppercase; color: var(--mid); cursor: pointer; background: none; border: none; margin-bottom: 3.5rem; display: block; transition: color 0.15s; padding: 0; font-family: var(--sans); }
     .back-btn:hover { color: var(--ink); }
-    .sv-date { font-size: 0.7rem; color: var(--mid); letter-spacing: 0.06em; margin-bottom: 0.8rem; }
-    .sv-title { font-size: clamp(1.4rem, 3.5vw, 2rem); font-weight: 400; line-height: 1.25; margin-bottom: 1.4rem; }
-    .sv-lede { font-size: 0.97rem; color: var(--mid); font-style: italic; line-height: 1.75; padding-bottom: 2.2rem; border-bottom: 1px solid var(--light); margin-bottom: 2.2rem; }
-    .sv-body { font-size: 0.95rem; line-height: 1.88; color: #222; }
+    .sv-date { font-size: 0.68rem; color: var(--mid); letter-spacing: 0.021em; margin-bottom: 0.8rem; }
+    .sv-title { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 400; line-height: 1.2; margin-bottom: 1.5rem; }
+    .sv-thumbnail { width: 100%; max-height: 440px; object-fit: cover; display: block; margin-bottom: 2rem; }
+    .sv-lede { font-size: 0.97rem; color: var(--mid); font-style: italic; line-height: 1.55; padding-bottom: 2rem; border-bottom: 1px solid var(--light); margin-bottom: 2rem; }
+    .sv-body { font-size: 0.95rem; line-height: 1.6; color: #222; }
     .sv-body p { margin-bottom: 1.4rem; }
-    .sv-body h2 { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin: 2.5rem 0 1rem; }
-    .sv-body h3 { font-size: 1rem; font-weight: 500; margin: 2rem 0 0.8rem; }
+    .sv-body h2 { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.045em; text-transform: uppercase; color: var(--mid); margin: 2.5rem 0 0.9rem; }
+    .sv-body h3 { font-size: 1rem; font-weight: 500; margin: 2rem 0 0.7rem; }
     .sv-body blockquote { border-left: 2px solid var(--light); padding-left: 1.4rem; margin: 2rem 0; font-style: italic; color: var(--mid); }
-    .sv-body img { max-width: 100%; height: auto; display: block; margin: 2rem 0; }
-    .sv-body .img-caption { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); margin-top: -1.5rem; margin-bottom: 2rem; }
+    .sv-body img { max-width: 100%; height: auto; display: block; margin: 2rem auto; }
+    .sv-body figure { margin: 2rem 0; }
+    .sv-body figcaption { font-size: 0.68rem; letter-spacing: 0.025em; text-transform: uppercase; color: var(--mid); margin-top: 0.6rem; text-align: center; }
     .sv-body ul, .sv-body ol { padding-left: 1.5rem; margin-bottom: 1.4rem; }
     .sv-body li { margin-bottom: 0.3rem; }
-
-    /* PHOTOS */
-    .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--light); }
-    .photo-cell { background: var(--bg); }
-    .photo-item { aspect-ratio: 4/5; overflow: hidden; background: #f5f5f5; }
-    .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.3s; }
-    .photo-item:hover img { opacity: 0.85; }
-    .photo-caption { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); padding: 0.6rem 0 1rem; }
-    .photo-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; aspect-ratio: 4/5; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--light); background: #fafafa; }
+    .img-full { width: 100%; }
+    .img-left { float: left; width: 48%; margin: 0.5rem 2rem 1rem 0; }
+    .img-right { float: right; width: 48%; margin: 0.5rem 0 1rem 2rem; }
+    .img-center { display: block; margin: 2rem auto; max-width: 80%; }
+    .clearfix::after { content: ''; display: table; clear: both; }
 
     /* ABOUT */
-    #about h2 { font-size: clamp(1.3rem, 3vw, 1.9rem); font-weight: 400; line-height: 1.35; margin-bottom: 2.2rem; }
-    .about-body p { font-size: 0.95rem; line-height: 1.88; color: #222; margin-bottom: 1.3rem; }
+    #view-about { padding: 8rem 2.5rem 8rem; max-width: 600px; margin: 0 auto; }
+    .about-label { font-size: 0.68rem; letter-spacing: 0.049em; text-transform: uppercase; color: var(--mid); margin-bottom: 2.5rem; }
+    #view-about h2 { font-size: clamp(1.3rem, 3vw, 1.9rem); font-weight: 400; line-height: 1.35; margin-bottom: 2rem; }
+    .about-body p { font-size: 0.95rem; line-height: 1.6; color: #222; margin-bottom: 1.3rem; }
     .about-body a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
     .about-body a:hover { color: var(--mid); }
     hr.divider { border: none; border-top: 1px solid var(--light); margin: 2.5rem 0; }
-    .about-meta { display: grid; grid-template-columns: 90px 1fr; gap: 0.55rem 2rem; font-size: 0.88rem; }
-    .about-meta .lbl { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); padding-top: 0.12rem; }
+    .about-meta { display: grid; grid-template-columns: 90px 1fr; gap: 0.5rem 2rem; font-size: 0.88rem; }
+    .about-meta .lbl { font-size: 0.64rem; letter-spacing: 0.035em; text-transform: uppercase; color: var(--mid); padding-top: 0.1rem; }
 
-    footer { text-align: center; padding: 4rem 2.5rem; font-size: 0.63rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--light); }
+    footer { text-align: center; padding: 4rem 2.5rem; font-size: 0.62rem; letter-spacing: 0.035em; text-transform: uppercase; color: var(--light); }
 
-    @media (max-width: 560px) {
+    @media (max-width: 700px) {
       nav { padding: 1.2rem 1.4rem; }
-      section, #post-view { padding-left: 1.4rem; padding-right: 1.4rem; }
-      #home { padding-top: 18vh; }
-      .post-item { flex-direction: column; gap: 0.25rem; }
-      .photo-grid { grid-template-columns: 1fr; background: none; gap: 1.5rem; }
-      .about-meta { grid-template-columns: 1fr; }
-      .about-meta .lbl { margin-top: 0.7rem; }
+      #view-grid { padding: 5rem 1.4rem 5rem; }
+      .post-grid { grid-template-columns: repeat(2, 1fr); }
+      #view-post, #view-about { padding-left: 1.4rem; padding-right: 1.4rem; }
+      .img-left, .img-right { float: none; width: 100%; margin: 1.5rem 0; }
+    }
+    @media (max-width: 400px) {
+      .post-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
 <nav id="nav">
-  <span class="nav-title" onclick="showSection('home')">With Warm Regards</span>
+  <span class="nav-title" onclick="showView('grid')">With Warm Regards</span>
   <ul class="nav-links">
-    <li><a href="#" onclick="return showSection('posts')" data-section="posts">Posts</a></li>
-    <li><a href="#" onclick="return showSection('about')" data-section="about">About</a></li>
+    <li><a href="#" onclick="return showView('grid')" data-view="grid">Posts</a></li>
+    <li><a href="#" onclick="return showView('about')" data-view="about">About</a></li>
   </ul>
 </nav>
 
-<section id="home" class="active">
-  <h1>A blog about things worth<br>paying attention to.</h1>
-  <p>Writing on life, place, and the slow accumulation of small observations. No agenda — just a space to think, remember, and share.</p>
-  <button class="text-link" onclick="showSection('posts')">Read the posts</button>
-</section>
+<!-- GRID -->
+<div id="view-grid" class="view active">
+  <div class="grid-header">
+    <span class="grid-label">Posts</span>
+  </div>
+  <div class="post-grid" id="post-grid"></div>
+</div>
 
-<section id="posts">
-  <p class="section-label">Posts</p>
-  <ul class="post-list" id="post-list"></ul>
-</section>
-
-<div id="post-view">
-  <button class="back-btn" onclick="showSection('posts')">← Posts</button>
+<!-- SINGLE POST -->
+<div id="view-post" class="view">
+  <button class="back-btn" onclick="showView('grid')">← All posts</button>
   <p class="sv-date" id="sv-date"></p>
   <h1 class="sv-title" id="sv-title"></h1>
-  <p class="sv-lede" id="sv-lede"></p>
+  <img class="sv-thumbnail" id="sv-thumbnail" src="" alt="" style="display:none">
+  <p class="sv-lede" id="sv-lede" style="display:none"></p>
   <div class="sv-body" id="sv-body"></div>
 </div>
 
-<section id="about">
-  <p class="section-label">About</p>
+<!-- ABOUT -->
+<div id="view-about" class="view">
+  <p class="about-label">About</p>
   <h2>Your name.<br>Based in [City].</h2>
   <div class="about-body">
     <p>This is a personal blog — a place for essays, observations, and the kind of writing that doesn't quite fit anywhere else.</p>
@@ -142,7 +143,7 @@
       <span class="lbl">Reading</span><span>Whatever book you're on</span>
     </div>
   </div>
-</section>
+</div>
 
 <footer>With Warm Regards &mdash; Est. 2025</footer>
 
@@ -154,21 +155,30 @@
     catch { return []; }
   }
 
-  function renderPosts() {
+  function formatDate(ts) {
+    return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function renderGrid() {
     const posts = getPosts().filter(p => p.published).sort((a, b) => b.createdAt - a.createdAt);
-    const list = document.getElementById('post-list');
+    const grid = document.getElementById('post-grid');
     if (posts.length === 0) {
-      list.innerHTML = '<p class="empty-state">No posts yet.</p>';
+      grid.innerHTML = '<div class="empty-state">No posts yet.</div>';
       return;
     }
-    list.innerHTML = posts.map(p => `
-      <li class="post-item" onclick="openPost('${p.id}')">
-        <div>
-          <p class="post-title">${p.title}</p>
-          ${p.lede ? `<p class="post-excerpt">${p.lede.substring(0, 80)}${p.lede.length > 80 ? '…' : ''}</p>` : ''}
+    grid.innerHTML = posts.map(p => `
+      <div class="tile" onclick="openPost('${p.id}')">
+        <div class="tile-img">
+          ${p.thumbnail
+            ? `<img src="${p.thumbnail}" alt="${p.title || ''}">`
+            : `<div class="tile-no-img">No image</div>`}
         </div>
-        <p class="post-date">${formatDate(p.createdAt)}</p>
-      </li>
+        <div class="tile-info">
+          <p class="tile-date">${formatDate(p.createdAt)}</p>
+          <p class="tile-title">${p.title || 'Untitled'}</p>
+          ${p.lede ? `<p class="tile-lede">${p.lede.substring(0, 72)}${p.lede.length > 72 ? '…' : ''}</p>` : ''}
+        </div>
+      </div>
     `).join('');
   }
 
@@ -176,46 +186,41 @@
     const p = getPosts().find(p => p.id === id);
     if (!p) return;
     document.getElementById('sv-date').textContent = formatDate(p.createdAt);
-    document.getElementById('sv-title').textContent = p.title;
-    document.getElementById('sv-lede').textContent = p.lede || '';
-    document.getElementById('sv-lede').style.display = p.lede ? 'block' : 'none';
-    document.getElementById('sv-body').innerHTML = p.body;
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-    document.getElementById('post-view').classList.add('active');
-    updateNav(null);
+    document.getElementById('sv-title').textContent = p.title || 'Untitled';
+
+    const thumb = document.getElementById('sv-thumbnail');
+    if (p.thumbnail) { thumb.src = p.thumbnail; thumb.style.display = 'block'; }
+    else { thumb.style.display = 'none'; }
+
+    const lede = document.getElementById('sv-lede');
+    if (p.lede) { lede.textContent = p.lede; lede.style.display = 'block'; }
+    else { lede.style.display = 'none'; }
+
+    document.getElementById('sv-body').innerHTML = p.body || '';
+    showView('post');
     window.scrollTo(0, 0);
   }
 
-  function formatDate(ts) {
-    return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  }
-
-  function showSection(id) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-    document.getElementById('post-view').classList.remove('active');
-    const el = document.getElementById(id);
+  function showView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const el = document.getElementById('view-' + id);
     if (el) {
       el.classList.add('active');
       el.style.animation = 'none';
       requestAnimationFrame(() => { el.style.animation = ''; });
     }
-    if (id === 'posts') renderPosts();
-    updateNav(id);
-    window.scrollTo(0, 0);
-    return false;
-  }
-
-  function updateNav(activeId) {
+    if (id === 'grid') renderGrid();
     document.querySelectorAll('.nav-links a').forEach(a => {
-      a.classList.toggle('active', a.dataset.section === activeId);
+      a.classList.toggle('active', a.dataset.view === id);
     });
+    return false;
   }
 
   window.addEventListener('scroll', () => {
     document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 10);
   });
 
-  renderPosts();
+  renderGrid();
 </script>
 </body>
 </html>
