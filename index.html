@@ -153,11 +153,9 @@
   const ABOUT_KEY   = 'wwr_about';
   const SEEDED_KEY  = 'wwr_seeded';
 
-  // Seed localStorage from data.js if it's newer than last seed
+  // Always seed from data.js so every visitor sees the latest published content
   (function seedFromDataFile() {
     if (typeof WWR_DATA === 'undefined' || !WWR_DATA.exportedAt) return;
-    const lastSeed = localStorage.getItem(SEEDED_KEY);
-    if (lastSeed && lastSeed >= WWR_DATA.exportedAt) return;
     if (WWR_DATA.posts?.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(WWR_DATA.posts));
     if (WWR_DATA.about && Object.keys(WWR_DATA.about).length) localStorage.setItem(ABOUT_KEY, JSON.stringify(WWR_DATA.about));
     localStorage.setItem(SEEDED_KEY, WWR_DATA.exportedAt);
