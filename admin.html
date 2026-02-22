@@ -323,6 +323,12 @@
         <textarea id="field-lede" rows="2" placeholder="A sentence that sets the tone…" oninput="autosave()"></textarea>
       </div>
 
+      <!-- PUBLISH DATE -->
+      <div class="field-group">
+        <label class="field-label" for="field-date">Publish date</label>
+        <input type="date" id="field-date" oninput="autosave()">
+      </div>
+
       <!-- THUMBNAIL -->
       <div class="field-group">
         <label class="field-label">Cover thumbnail</label>
@@ -450,7 +456,7 @@
         <div class="post-card-text">
           <div class="post-card-title">${p.title || 'Untitled'}</div>
           <div class="post-card-meta">
-            <span>${fmtDate(p.createdAt)}</span>
+            <span>${fmtDate(p.createdAt, p.publishDate)}</span>
             <span class="badge ${p.published ? 'published' : 'draft'}">${p.published ? 'Published' : 'Draft'}</span>
           </div>
         </div>
@@ -460,7 +466,8 @@
 
   /* ── LOAD / NEW ── */
   function newPost() {
-    const post = { id: uid(), title: '', lede: '', body: '', thumbnail: '', photos: [], published: false, createdAt: Date.now() };
+    const today = new Date().toISOString().slice(0, 10);
+    const post = { id: uid(), title: '', lede: '', body: '', thumbnail: '', photos: [], published: false, createdAt: Date.now(), publishDate: today };
     const posts = getPosts();
     posts.unshift(post);
     savePosts(posts);
@@ -475,17 +482,14 @@
 
     document.getElementById('field-title').value = post.title || '';
     document.getElementById('field-lede').value = post.lede || '';
+    document.getElementById('field-date').value = post.publishDate || new Date().toISOString().slice(0, 10);
     document.getElementById('editor').innerHTML = post.body || '';
 
-    // thumbnail
     setThumbPreview(post.thumbnail || '');
-
     renderLibrary();
     showEditor();
     setStatus('');
     renderSidebar();
-
-    // re-attach img click listeners after load
     attachImgListeners();
   }
 
@@ -736,6 +740,7 @@
       thumbnail: document.getElementById('thumb-img').src || '',
       photos: currentPhotos,
       published,
+      publishDate: document.getElementById('field-date').value,
       createdAt: existing.createdAt || Date.now()
     };
   }
@@ -799,7 +804,11 @@
     el.className = 'status-msg' + (type ? ' ' + type : '');
     if (msg && type === 'ok') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
   }
-  function fmtDate(ts) {
+  function fmtDate(ts, publishDate) {
+    if (publishDate) {
+      const [y, m, d] = publishDate.split('-');
+      return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
     return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 

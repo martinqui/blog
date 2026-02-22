@@ -155,12 +155,20 @@
     catch { return []; }
   }
 
-  function formatDate(ts) {
+  function formatDate(ts, publishDate) {
+    if (publishDate) {
+      const [y, m, d] = publishDate.split('-');
+      return new Date(y, m - 1, d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
     return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   function renderGrid() {
-    const posts = getPosts().filter(p => p.published).sort((a, b) => b.createdAt - a.createdAt);
+    const posts = getPosts().filter(p => p.published).sort((a, b) => {
+      const da = a.publishDate ? new Date(a.publishDate) : new Date(a.createdAt);
+      const db = b.publishDate ? new Date(b.publishDate) : new Date(b.createdAt);
+      return db - da;
+    });
     const grid = document.getElementById('post-grid');
     if (posts.length === 0) {
       grid.innerHTML = '<div class="empty-state">No posts yet.</div>';
@@ -174,7 +182,7 @@
             : `<div class="tile-no-img">No image</div>`}
         </div>
         <div class="tile-info">
-          <p class="tile-date">${formatDate(p.createdAt)}</p>
+          <p class="tile-date">${formatDate(p.createdAt, p.publishDate)}</p>
           <p class="tile-title">${p.title || 'Untitled'}</p>
           ${p.lede ? `<p class="tile-lede">${p.lede.substring(0, 72)}${p.lede.length > 72 ? '…' : ''}</p>` : ''}
         </div>
@@ -185,7 +193,7 @@
   function openPost(id) {
     const p = getPosts().find(p => p.id === id);
     if (!p) return;
-    document.getElementById('sv-date').textContent = formatDate(p.createdAt);
+    document.getElementById('sv-date').textContent = formatDate(p.createdAt, p.publishDate);
     document.getElementById('sv-title').textContent = p.title || 'Untitled';
 
     const thumb = document.getElementById('sv-thumbnail');
