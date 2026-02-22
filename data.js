@@ -1,7 +1,7 @@
 /**
  * ─────────────────────────────────────────────────────────────
  *  WITH WARM REGARDS — data.js
- *  Exported: 2026-02-22T11:20:08.097Z
+ *  Exported: 2026-02-22T11:25:52.239Z
  *
  *  HOW TO USE:
  *    Replace the data.js in your site folder with this file,
@@ -12,7 +12,7 @@
  */
 
 const WWR_DATA = {
-  "exportedAt": "2026-02-22T11:20:08.097Z",
+  "exportedAt": "2026-02-22T11:25:52.239Z",
   "posts": [
     {
       "id": "mlxnjktb9mvt",
