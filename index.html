@@ -130,13 +130,13 @@
 <!-- ABOUT -->
 <div id="view-about" class="view">
   <p class="about-label">About</p>
-  <h2>Your name.<br>Based in [City].</h2>
-  <div class="about-body">
+  <h2 id="about-name">Your name.<br>Based in [City].</h2>
+  <div class="about-body" id="about-body">
     <p>This is a personal blog — a place for essays, observations, and the kind of writing that doesn't quite fit anywhere else.</p>
     <p>I work in [field] and spend the rest of my time reading, walking, and noticing things. The name comes from the way I used to sign letters as a kid, before anyone told me it was old-fashioned.</p>
     <p>Feel free to reach out — I read everything.</p>
     <hr class="divider">
-    <div class="about-meta">
+    <div class="about-meta" id="about-meta">
       <span class="lbl">Location</span><span>Your City</span>
       <span class="lbl">Email</span><span><a href="mailto:you@email.com">you@email.com</a></span>
       <span class="lbl">Instagram</span><span><a href="https://instagram.com/" target="_blank">@yourhandle</a></span>
@@ -201,6 +201,51 @@
     window.scrollTo(0, 0);
   }
 
+  const ABOUT_KEY = 'wwr_about';
+
+  function getAbout() {
+    try { return JSON.parse(localStorage.getItem(ABOUT_KEY)) || {}; }
+    catch { return {}; }
+  }
+
+  function renderAbout() {
+    const a = getAbout();
+
+    // Name/headline — split on period for line break effect
+    const nameEl = document.getElementById('about-name');
+    if (a.name) {
+      const parts = a.name.split('.');
+      nameEl.innerHTML = parts.length > 1
+        ? parts[0].trim() + '.<br>' + parts.slice(1).join('.').trim()
+        : a.name;
+    }
+
+    // Bio paragraphs
+    const bodyEl = document.getElementById('about-body');
+    if (a.bio) {
+      const paras = a.bio.split(/\n\n+/).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
+      const metaRows = buildMeta(a);
+      bodyEl.innerHTML = paras + '<hr class="divider"><div class="about-meta">' + metaRows + '</div>';
+    } else {
+      // just refresh meta if no bio set
+      const metaEl = document.getElementById('about-meta');
+      if (metaEl) metaEl.innerHTML = buildMeta(a);
+    }
+  }
+
+  function buildMeta(a) {
+    const rows = [];
+    if (a.location) rows.push(`<span class="lbl">Location</span><span>${a.location}</span>`);
+    if (a.email)    rows.push(`<span class="lbl">Email</span><span><a href="mailto:${a.email}">${a.email}</a></span>`);
+    if (a.instagram) {
+      const handle = a.instagram.startsWith('@') ? a.instagram : '@' + a.instagram;
+      const slug = handle.replace('@','');
+      rows.push(`<span class="lbl">Instagram</span><span><a href="https://instagram.com/${slug}" target="_blank">${handle}</a></span>`);
+    }
+    if (a.reading)  rows.push(`<span class="lbl">Reading</span><span>${a.reading}</span>`);
+    return rows.join('');
+  }
+
   function showView(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const el = document.getElementById('view-' + id);
@@ -210,6 +255,7 @@
       requestAnimationFrame(() => { el.style.animation = ''; });
     }
     if (id === 'grid') renderGrid();
+    if (id === 'about') renderAbout();
     document.querySelectorAll('.nav-links a').forEach(a => {
       a.classList.toggle('active', a.dataset.view === id);
     });

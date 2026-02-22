@@ -240,7 +240,21 @@
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-head">
-      <span class="sidebar-label">All posts</span>
+      <span class="sidebar-label">Pages</span>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div class="post-card" id="about-nav-card" onclick="openAboutEditor()" style="margin-bottom:0.4rem;">
+        <div class="post-card-thumb" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:1rem;">☻</span>
+        </div>
+        <div class="post-card-text">
+          <div class="post-card-title">About page</div>
+          <div class="post-card-meta"><span class="badge published">Page</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-head" style="margin-top:0.5rem;">
+      <span class="sidebar-label">Posts</span>
     </div>
     <div class="post-cards" id="post-cards">
       <p class="empty-sidebar">No posts yet.</p>
@@ -249,7 +263,51 @@
 
   <!-- EDITOR -->
   <div class="editor-wrap" id="editor-wrap">
-    <div class="editor-welcome" id="welcome-msg">Select a post or create a new one.</div>
+    <div class="editor-welcome" id="welcome-msg">Select a post, create a new one, or edit the About page.</div>
+
+    <!-- ABOUT EDITOR PANEL -->
+    <div class="editor-form" id="about-form" style="display:none">
+
+      <div style="border-bottom:1px solid var(--light);padding-bottom:1rem;margin-bottom:0.5rem;">
+        <div class="field-label" style="font-size:0.8rem;color:var(--ink);font-weight:500;">About page</div>
+        <p class="field-hint" style="margin-top:0.3rem;">This content appears on the public About page of your blog.</p>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="about-name">Name / headline</label>
+        <input type="text" id="about-name" placeholder="Your name. Based in [City]." oninput="autosaveAbout()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="about-bio">Bio</label>
+        <p class="field-hint">Write in plain paragraphs. Press Enter twice to start a new paragraph.</p>
+        <textarea id="about-bio" rows="7" placeholder="Tell readers who you are and what this blog is about…" oninput="autosaveAbout()"></textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="field-group">
+          <label class="field-label" for="about-location">Location</label>
+          <input type="text" id="about-location" placeholder="Your City" oninput="autosaveAbout()">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="about-email">Email</label>
+          <input type="text" id="about-email" placeholder="you@email.com" oninput="autosaveAbout()">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="about-instagram">Instagram handle</label>
+          <input type="text" id="about-instagram" placeholder="@yourhandle" oninput="autosaveAbout()">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="about-reading">Currently reading</label>
+          <input type="text" id="about-reading" placeholder="Book title" oninput="autosaveAbout()">
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn primary" onclick="saveAbout()">Save about page</button>
+        <span class="status-msg" id="about-status-msg"></span>
+      </div>
+    </div>
 
     <div class="editor-form" id="editor-form" style="display:none">
 
@@ -433,7 +491,9 @@
 
   function showEditor() {
     document.getElementById('welcome-msg').style.display = 'none';
+    document.getElementById('about-form').style.display = 'none';
     document.getElementById('editor-form').style.display = 'flex';
+    document.getElementById('about-nav-card').classList.remove('selected');
   }
 
   /* ── THUMBNAIL ── */
@@ -747,6 +807,70 @@
   document.addEventListener('click', e => {
     if (!e.target.closest('#editor') && !e.target.closest('#img-toolbar')) deselectImg();
   });
+
+  /* ── ABOUT EDITOR ── */
+  const ABOUT_KEY = 'wwr_about';
+
+  function getAbout() {
+    try { return JSON.parse(localStorage.getItem(ABOUT_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveAboutData(data) { localStorage.setItem(ABOUT_KEY, JSON.stringify(data)); }
+
+  function openAboutEditor() {
+    // deselect any post
+    currentId = null;
+    document.getElementById('editor-form').style.display = 'none';
+    document.getElementById('welcome-msg').style.display = 'none';
+
+    const about = getAbout();
+    document.getElementById('about-name').value = about.name || '';
+    document.getElementById('about-bio').value = about.bio || '';
+    document.getElementById('about-location').value = about.location || '';
+    document.getElementById('about-email').value = about.email || '';
+    document.getElementById('about-instagram').value = about.instagram || '';
+    document.getElementById('about-reading').value = about.reading || '';
+
+    document.getElementById('about-form').style.display = 'flex';
+    setAboutStatus('');
+
+    // highlight sidebar card
+    document.querySelectorAll('.post-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('about-nav-card').classList.add('selected');
+    renderSidebar();
+  }
+
+  function collectAbout() {
+    return {
+      name: document.getElementById('about-name').value.trim(),
+      bio: document.getElementById('about-bio').value.trim(),
+      location: document.getElementById('about-location').value.trim(),
+      email: document.getElementById('about-email').value.trim(),
+      instagram: document.getElementById('about-instagram').value.trim(),
+      reading: document.getElementById('about-reading').value.trim(),
+    };
+  }
+
+  function saveAbout() {
+    saveAboutData(collectAbout());
+    setAboutStatus('Saved!', 'ok');
+  }
+
+  let aboutAutosaveTimer = null;
+  function autosaveAbout() {
+    clearTimeout(aboutAutosaveTimer);
+    aboutAutosaveTimer = setTimeout(() => {
+      saveAboutData(collectAbout());
+      setAboutStatus('Saved', '');
+    }, 1200);
+  }
+
+  function setAboutStatus(msg, type) {
+    const el = document.getElementById('about-status-msg');
+    el.textContent = msg;
+    el.className = 'status-msg' + (type ? ' ' + type : '');
+    if (msg && type === 'ok') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+  }
 
   renderSidebar();
 </script>
