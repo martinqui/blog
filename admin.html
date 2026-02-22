@@ -431,45 +431,114 @@
 </div>
 
 <script>
-  const STORAGE_KEY = 'wwr_posts';
-  const ABOUT_KEY   = 'wwr_about';
+  /* ════════════════════════════════════════════════════════════════
+     IndexedDB storage layer — no size limits, replaces localStorage
+     DB: wwr_db  |  stores: posts, about, meta
+  ════════════════════════════════════════════════════════════════ */
+  const DB_NAME    = 'wwr_db';
+  const DB_VERSION = 1;
+  let   _db        = null;
 
-  function getAbout() {
-    try { return JSON.parse(localStorage.getItem(ABOUT_KEY)) || {}; }
-    catch { return {}; }
+  function openDB() {
+    if (_db) return Promise.resolve(_db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('posts')) db.createObjectStore('posts', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('kv'))    db.createObjectStore('kv');
+      };
+      req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+      req.onerror   = e => reject(e.target.error);
+    });
   }
-  function saveAboutData(data) { localStorage.setItem(ABOUT_KEY, JSON.stringify(data)); }
-  const SEEDED_KEY  = 'wwr_seeded';
 
-  /* ── SEED FROM data.js ON FIRST LOAD ──
-     If localStorage is empty and data.js has content, load it in.
-     This runs once per fresh browser / after clearing data.        */
-  (function seedFromDataFile() {
+  /* ── posts store helpers ── */
+  async function getPosts() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('posts', 'readonly');
+      const req = tx.objectStore('posts').getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  async function savePost(post) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('posts', 'readwrite');
+      const req = tx.objectStore('posts').put(post);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  async function deletePostById(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('posts', 'readwrite');
+      const req = tx.objectStore('posts').delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  /* ── kv store helpers (about, meta) ── */
+  async function kvGet(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('kv', 'readonly');
+      const req = tx.objectStore('kv').get(key);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  async function kvSet(key, value) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('kv', 'readwrite');
+      const req = tx.objectStore('kv').put(value, key);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  async function getAbout() {
+    return (await kvGet('about')) || {};
+  }
+  async function saveAboutData(data) {
+    await kvSet('about', data);
+  }
+
+  /* ── Seed from data.js on first load ── */
+  async function seedFromDataFile() {
     if (typeof WWR_DATA === 'undefined') return;
-    if (!WWR_DATA.exportedAt) return; // blank data.js, nothing to seed
+    if (!WWR_DATA.exportedAt) return;
 
-    const alreadySeeded = localStorage.getItem(SEEDED_KEY);
-    // Re-seed if data.js is newer than last seed
-    if (alreadySeeded && alreadySeeded >= WWR_DATA.exportedAt) return;
+    const lastSeed = await kvGet('seeded');
+    if (lastSeed && lastSeed >= WWR_DATA.exportedAt) return;
 
     if (WWR_DATA.posts && WWR_DATA.posts.length) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(WWR_DATA.posts));
+      for (const p of WWR_DATA.posts) await savePost(p);
     }
     if (WWR_DATA.about && Object.keys(WWR_DATA.about).length) {
-      localStorage.setItem(ABOUT_KEY, JSON.stringify(WWR_DATA.about));
+      await kvSet('about', WWR_DATA.about);
     }
-    localStorage.setItem(SEEDED_KEY, WWR_DATA.exportedAt);
+    await kvSet('seeded', WWR_DATA.exportedAt);
     console.log('[WWR] Seeded from data.js exported at', WWR_DATA.exportedAt);
-  })();
+  }
 
-  /* ── EXPORT ── generates data.js and triggers a download ── */
+  /* ── EXPORT ── generates index.html and triggers a download ── */
   function exportDataFile() {
     generateIndexHtml();
   }
 
-  function generateIndexHtml() {
-    const posts = getPosts().filter(p => p.published);
-    const about = getAbout();
+  async function generateIndexHtml() {
+    const allPosts = await getPosts();
+    const posts    = allPosts.filter(p => p.published);
+    const about    = await getAbout();
 
     const postsJson = JSON.stringify(posts);
     const aboutJson = JSON.stringify(about);
@@ -659,22 +728,21 @@
     URL.revokeObjectURL(a.href);
   }
 
-  /* ── IMPORT ── reads a data.js file and loads it into localStorage ── */
+  /* ── IMPORT ── reads a data.js file and loads it into IndexedDB ── */
   function importDataFile(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => {
+    reader.onload = async ev => {
       try {
-        // Extract the JSON from the JS file
-        const text = ev.target.result;
+        const text  = ev.target.result;
         const match = text.match(/const WWR_DATA\s*=\s*(\{[\s\S]*?\});\s*$/m);
         if (!match) throw new Error('Could not parse data.js');
         const data = JSON.parse(match[1]);
 
-        if (data.posts) localStorage.setItem(STORAGE_KEY, JSON.stringify(data.posts));
-        if (data.about) localStorage.setItem(ABOUT_KEY, JSON.stringify(data.about));
-        if (data.exportedAt) localStorage.setItem(SEEDED_KEY, data.exportedAt);
+        if (data.posts) for (const p of data.posts) await savePost(p);
+        if (data.about) await kvSet('about', data.about);
+        if (data.exportedAt) await kvSet('seeded', data.exportedAt);
 
         setGlobalStatus(`Imported ${data.posts?.length || 0} posts. Reloading…`, 'ok');
         setTimeout(() => location.reload(), 1200);
@@ -705,22 +773,16 @@
     clearTimeout(toast._timer);
     toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
   }
-  let currentId = null;
+  let currentId     = null;
   let autosaveTimer = null;
   let currentPhotos = []; // { id, dataUrl }
-  let selectedImg = null; // currently selected img element in editor
+  let selectedImg   = null;
 
-  /* ── STORAGE ── */
-  function getPosts() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch { return []; }
-  }
-  function savePosts(posts) { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
   /* ── SIDEBAR ── */
-  function renderSidebar() {
-    const posts = getPosts().sort((a, b) => b.createdAt - a.createdAt);
+  async function renderSidebar() {
+    const posts = (await getPosts()).sort((a, b) => b.createdAt - a.createdAt);
     const el = document.getElementById('post-cards');
     if (!posts.length) { el.innerHTML = '<p class="empty-sidebar">No posts yet.</p>'; return; }
     el.innerHTML = posts.map(p => `
@@ -742,25 +804,24 @@
   }
 
   /* ── LOAD / NEW ── */
-  function newPost() {
+  async function newPost() {
     const today = new Date().toISOString().slice(0, 10);
-    const post = { id: uid(), title: '', lede: '', body: '', thumbnail: '', photos: [], published: false, createdAt: Date.now(), publishDate: today };
-    const posts = getPosts();
-    posts.unshift(post);
-    savePosts(posts);
+    const post  = { id: uid(), title: '', lede: '', body: '', thumbnail: '', photos: [], published: false, createdAt: Date.now(), publishDate: today };
+    await savePost(post);
     loadPost(post.id);
   }
 
-  function loadPost(id) {
-    const post = getPosts().find(p => p.id === id);
+  async function loadPost(id) {
+    const posts = await getPosts();
+    const post  = posts.find(p => p.id === id);
     if (!post) return;
-    currentId = id;
+    currentId     = id;
     currentPhotos = post.photos || [];
 
     document.getElementById('field-title').value = post.title || '';
-    document.getElementById('field-lede').value = post.lede || '';
-    document.getElementById('field-date').value = post.publishDate || new Date().toISOString().slice(0, 10);
-    document.getElementById('editor').innerHTML = post.body || '';
+    document.getElementById('field-lede').value  = post.lede  || '';
+    document.getElementById('field-date').value  = post.publishDate || new Date().toISOString().slice(0, 10);
+    document.getElementById('editor').innerHTML  = post.body  || '';
 
     setThumbPreview(post.thumbnail || '');
     renderLibrary();
@@ -771,9 +832,9 @@
   }
 
   function showEditor() {
-    document.getElementById('welcome-msg').style.display = 'none';
-    document.getElementById('about-form').style.display = 'none';
-    document.getElementById('editor-form').style.display = 'flex';
+    document.getElementById('welcome-msg').style.display  = 'none';
+    document.getElementById('about-form').style.display   = 'none';
+    document.getElementById('editor-form').style.display  = 'flex';
     document.getElementById('about-nav-card').classList.remove('selected');
   }
 
@@ -791,8 +852,8 @@
   }
 
   function setThumbPreview(dataUrl) {
-    const img = document.getElementById('thumb-img');
-    const empty = document.getElementById('thumb-empty');
+    const img       = document.getElementById('thumb-img');
+    const empty     = document.getElementById('thumb-empty');
     const removeBtn = document.getElementById('thumb-remove-btn');
     if (dataUrl) {
       img.src = dataUrl; img.style.display = 'block';
@@ -843,6 +904,79 @@
     currentPhotos = currentPhotos.filter(p => p.id !== id);
     renderLibrary();
     autosaveImmediate();
+  }
+
+  /* ── COLLECT & SAVE ── */
+  function collectPost(published) {
+    const thumbImg = document.getElementById('thumb-img');
+    return {
+      id:          currentId,
+      title:       document.getElementById('field-title').value.trim(),
+      lede:        document.getElementById('field-lede').value.trim(),
+      body:        document.getElementById('editor').innerHTML,
+      thumbnail:   (thumbImg.style.display !== 'none' ? thumbImg.src : '') || '',
+      photos:      currentPhotos,
+      published,
+      publishDate: document.getElementById('field-date').value,
+      createdAt:   Date.now()
+    };
+  }
+
+  async function upsert(post) {
+    const posts    = await getPosts();
+    const existing = posts.find(p => p.id === post.id);
+    if (existing) post.createdAt = existing.createdAt;
+    await savePost(post);
+  }
+
+  async function saveDraft() {
+    if (!currentId) return;
+    await upsert(collectPost(false));
+    renderSidebar(); setStatus('Draft saved.', 'ok');
+  }
+
+  async function publishPost() {
+    if (!currentId) return;
+    const post = collectPost(true);
+    if (!post.title) { setStatus('Add a title before publishing.', 'err'); return; }
+    await upsert(post);
+    renderSidebar();
+    setStatus('Published!', 'ok');
+    generateIndexHtml();
+    setGlobalStatus('⬇ index.html downloaded — upload it to GitHub to go live.', 'ok');
+  }
+
+  async function autosaveImmediate() {
+    if (!currentId) return;
+    const posts    = await getPosts();
+    const existing = posts.find(p => p.id === currentId);
+    await upsert(collectPost(existing?.published || false));
+    renderSidebar();
+  }
+
+  function autosave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(async () => {
+      if (!currentId) return;
+      const posts    = await getPosts();
+      const existing = posts.find(p => p.id === currentId);
+      await upsert(collectPost(existing?.published || false));
+      renderSidebar();
+      setStatus('Saved', '');
+    }, 1400);
+  }
+
+  /* ── DELETE ── */
+  function confirmDelete() { document.getElementById('delete-modal').classList.add('open'); }
+  function closeModal()    { document.getElementById('delete-modal').classList.remove('open'); }
+  async function deletePost() {
+    closeModal();
+    if (!currentId) return;
+    await deletePostById(currentId);
+    currentId = null; currentPhotos = [];
+    document.getElementById('editor-form').style.display  = 'none';
+    document.getElementById('welcome-msg').style.display  = 'block';
+    renderSidebar();
   }
 
   /* ── INSERT IMAGE INTO EDITOR ── */
@@ -1006,77 +1140,6 @@
     if (url) { document.getElementById('editor').focus(); fmt('createLink', url); }
   }
 
-  /* ── COLLECT & SAVE ── */
-  function collectPost(published) {
-    const existing = getPosts().find(p => p.id === currentId) || {};
-    return {
-      id: currentId,
-      title: document.getElementById('field-title').value.trim(),
-      lede: document.getElementById('field-lede').value.trim(),
-      body: document.getElementById('editor').innerHTML,
-      thumbnail: document.getElementById('thumb-img').src || '',
-      photos: currentPhotos,
-      published,
-      publishDate: document.getElementById('field-date').value,
-      createdAt: existing.createdAt || Date.now()
-    };
-  }
-
-  function upsert(post) {
-    const posts = getPosts();
-    const i = posts.findIndex(p => p.id === post.id);
-    if (i >= 0) posts[i] = post; else posts.unshift(post);
-    savePosts(posts);
-  }
-
-  function saveDraft() {
-    if (!currentId) return;
-    upsert(collectPost(false));
-    renderSidebar(); setStatus('Draft saved.', 'ok');
-  }
-
-  function publishPost() {
-    if (!currentId) return;
-    const post = collectPost(true);
-    if (!post.title) { setStatus('Add a title before publishing.', 'err'); return; }
-    upsert(post);
-    renderSidebar();
-    setStatus('Published!', 'ok');
-    generateIndexHtml();
-    setGlobalStatus('⬇ index.html downloaded — upload it to GitHub to go live.', 'ok');
-  }
-
-  function autosaveImmediate() {
-    if (!currentId) return;
-    const existing = getPosts().find(p => p.id === currentId);
-    upsert(collectPost(existing?.published || false));
-    renderSidebar();
-  }
-
-  function autosave() {
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(() => {
-      if (!currentId) return;
-      const existing = getPosts().find(p => p.id === currentId);
-      upsert(collectPost(existing?.published || false));
-      renderSidebar();
-      setStatus('Saved', '');
-    }, 1400);
-  }
-
-  /* ── DELETE ── */
-  function confirmDelete() { document.getElementById('delete-modal').classList.add('open'); }
-  function closeModal() { document.getElementById('delete-modal').classList.remove('open'); }
-  function deletePost() {
-    closeModal();
-    if (!currentId) return;
-    savePosts(getPosts().filter(p => p.id !== currentId));
-    currentId = null; currentPhotos = [];
-    document.getElementById('editor-form').style.display = 'none';
-    document.getElementById('welcome-msg').style.display = 'block';
-    renderSidebar();
-  }
-
   /* ── UTILS ── */
   function setStatus(msg, type) {
     const el = document.getElementById('status-msg');
@@ -1098,18 +1161,18 @@
   });
 
   /* ── ABOUT EDITOR ── */
-  function openAboutEditor() {
+  async function openAboutEditor() {
     currentId = null;
     document.getElementById('editor-form').style.display = 'none';
     document.getElementById('welcome-msg').style.display = 'none';
 
-    const about = getAbout();
-    document.getElementById('about-name').value = about.name || '';
-    document.getElementById('about-bio').value = about.bio || '';
-    document.getElementById('about-location').value = about.location || '';
-    document.getElementById('about-email').value = about.email || '';
+    const about = await getAbout();
+    document.getElementById('about-name').value      = about.name      || '';
+    document.getElementById('about-bio').value       = about.bio       || '';
+    document.getElementById('about-location').value  = about.location  || '';
+    document.getElementById('about-email').value     = about.email     || '';
     document.getElementById('about-instagram').value = about.instagram || '';
-    document.getElementById('about-reading').value = about.reading || '';
+    document.getElementById('about-reading').value   = about.reading   || '';
 
     document.getElementById('about-form').style.display = 'flex';
     setAboutStatus('');
@@ -1121,25 +1184,25 @@
 
   function collectAbout() {
     return {
-      name: document.getElementById('about-name').value.trim(),
-      bio: document.getElementById('about-bio').value.trim(),
-      location: document.getElementById('about-location').value.trim(),
-      email: document.getElementById('about-email').value.trim(),
+      name:      document.getElementById('about-name').value.trim(),
+      bio:       document.getElementById('about-bio').value.trim(),
+      location:  document.getElementById('about-location').value.trim(),
+      email:     document.getElementById('about-email').value.trim(),
       instagram: document.getElementById('about-instagram').value.trim(),
-      reading: document.getElementById('about-reading').value.trim(),
+      reading:   document.getElementById('about-reading').value.trim(),
     };
   }
 
-  function saveAbout() {
-    saveAboutData(collectAbout());
+  async function saveAbout() {
+    await saveAboutData(collectAbout());
     setAboutStatus('Saved!', 'ok');
   }
 
   let aboutAutosaveTimer = null;
   function autosaveAbout() {
     clearTimeout(aboutAutosaveTimer);
-    aboutAutosaveTimer = setTimeout(() => {
-      saveAboutData(collectAbout());
+    aboutAutosaveTimer = setTimeout(async () => {
+      await saveAboutData(collectAbout());
       setAboutStatus('Saved', '');
     }, 1200);
   }
@@ -1151,7 +1214,11 @@
     if (msg && type === 'ok') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
   }
 
-  renderSidebar();
+  /* ── INIT ── */
+  (async () => {
+    await seedFromDataFile();
+    await renderSidebar();
+  })();
 </script>
 </body>
 </html>
