@@ -149,39 +149,35 @@
 <footer>With Warm Regards &mdash; Est. 2025</footer>
 
 <script>
-  const STORAGE_KEY = 'wwr_posts';
-  const ABOUT_KEY   = 'wwr_about';
-  const SEEDED_KEY  = 'wwr_seeded';
-
-  // Always seed from data.js so every visitor sees the latest published content
-  (function seedFromDataFile() {
-    if (typeof WWR_DATA === 'undefined' || !WWR_DATA.exportedAt) return;
-    if (WWR_DATA.posts?.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(WWR_DATA.posts));
-    if (WWR_DATA.about && Object.keys(WWR_DATA.about).length) localStorage.setItem(ABOUT_KEY, JSON.stringify(WWR_DATA.about));
-    localStorage.setItem(SEEDED_KEY, WWR_DATA.exportedAt);
-  })();
+  // index.html reads DIRECTLY from WWR_DATA (data.js) — no localStorage involved.
+  // To update the site: publish in admin → replace data.js on GitHub → done.
 
   function getPosts() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch { return []; }
+    if (typeof WWR_DATA === 'undefined') return [];
+    return (WWR_DATA.posts || []).filter(p => p.published);
   }
 
-  function formatDate(ts, publishDate) {
+  function getAbout() {
+    if (typeof WWR_DATA === 'undefined') return {};
+    return WWR_DATA.about || {};
+  }
+
+  function formatDate(publishDate, createdAt) {
     if (publishDate) {
       const [y, m, d] = publishDate.split('-');
       return new Date(y, m - 1, d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     }
-    return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date(createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   function renderGrid() {
-    const posts = getPosts().filter(p => p.published).sort((a, b) => {
+    const posts = getPosts().sort((a, b) => {
       const da = a.publishDate ? new Date(a.publishDate) : new Date(a.createdAt);
       const db = b.publishDate ? new Date(b.publishDate) : new Date(b.createdAt);
       return db - da;
     });
     const grid = document.getElementById('post-grid');
-    if (posts.length === 0) {
+    if (!posts.length) {
       grid.innerHTML = '<div class="empty-state">No posts yet.</div>';
       return;
     }
@@ -193,7 +189,7 @@
             : `<div class="tile-no-img">No image</div>`}
         </div>
         <div class="tile-info">
-          <p class="tile-date">${formatDate(p.createdAt, p.publishDate)}</p>
+          <p class="tile-date">${formatDate(p.publishDate, p.createdAt)}</p>
           <p class="tile-title">${p.title || 'Untitled'}</p>
           ${p.lede ? `<p class="tile-lede">${p.lede.substring(0, 72)}${p.lede.length > 72 ? '…' : ''}</p>` : ''}
         </div>
@@ -204,7 +200,8 @@
   function openPost(id) {
     const p = getPosts().find(p => p.id === id);
     if (!p) return;
-    document.getElementById('sv-date').textContent = formatDate(p.createdAt, p.publishDate);
+
+    document.getElementById('sv-date').textContent = formatDate(p.publishDate, p.createdAt);
     document.getElementById('sv-title').textContent = p.title || 'Untitled';
 
     const thumb = document.getElementById('sv-thumbnail');
@@ -220,17 +217,8 @@
     window.scrollTo(0, 0);
   }
 
-  const ABOUT_KEY = 'wwr_about';
-
-  function getAbout() {
-    try { return JSON.parse(localStorage.getItem(ABOUT_KEY)) || {}; }
-    catch { return {}; }
-  }
-
   function renderAbout() {
     const a = getAbout();
-
-    // Name/headline — split on period for line break effect
     const nameEl = document.getElementById('about-name');
     if (a.name) {
       const parts = a.name.split('.');
@@ -238,18 +226,12 @@
         ? parts[0].trim() + '.<br>' + parts.slice(1).join('.').trim()
         : a.name;
     }
-
-    // Bio paragraphs
     const bodyEl = document.getElementById('about-body');
-    if (a.bio) {
-      const paras = a.bio.split(/\n\n+/).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
-      const metaRows = buildMeta(a);
-      bodyEl.innerHTML = paras + '<hr class="divider"><div class="about-meta">' + metaRows + '</div>';
-    } else {
-      // just refresh meta if no bio set
-      const metaEl = document.getElementById('about-meta');
-      if (metaEl) metaEl.innerHTML = buildMeta(a);
-    }
+    const paras = a.bio
+      ? a.bio.split(/\n\n+/).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('')
+      : '';
+    const meta = buildMeta(a);
+    bodyEl.innerHTML = paras + (meta ? '<hr class="divider"><div class="about-meta">' + meta + '</div>' : '');
   }
 
   function buildMeta(a) {
@@ -258,10 +240,9 @@
     if (a.email)    rows.push(`<span class="lbl">Email</span><span><a href="mailto:${a.email}">${a.email}</a></span>`);
     if (a.instagram) {
       const handle = a.instagram.startsWith('@') ? a.instagram : '@' + a.instagram;
-      const slug = handle.replace('@','');
-      rows.push(`<span class="lbl">Instagram</span><span><a href="https://instagram.com/${slug}" target="_blank">${handle}</a></span>`);
+      rows.push(`<span class="lbl">Instagram</span><span><a href="https://instagram.com/${handle.replace('@','')}" target="_blank">${handle}</a></span>`);
     }
-    if (a.reading)  rows.push(`<span class="lbl">Reading</span><span>${a.reading}</span>`);
+    if (a.reading) rows.push(`<span class="lbl">Reading</span><span>${a.reading}</span>`);
     return rows.join('');
   }
 
